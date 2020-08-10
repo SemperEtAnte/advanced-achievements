@@ -12,7 +12,11 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
-
+out/
+advanced-achievements-plugin/
+.idea
+*.iml
+*.jar
 ### Eclipse ###
 
 .metadata
