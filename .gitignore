@@ -13,7 +13,7 @@ buildNumber.properties
 .mvn/timing.properties
 
 out/
-advanced-achievements-plugin/
+AllAdvAddon/
 .idea
 *.iml
 *.jar

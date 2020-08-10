@@ -1,6 +1,0 @@
-name: AdvancedAchivmentsListAddon
-main: ru.SemperAnte.AdvancedAchivments.ListAddon
-version: "1.0"
-author: SemperAnte
-api-version: "1.13"
-softdepend: [SemperAnteAPI, AdvancedAchievements]
