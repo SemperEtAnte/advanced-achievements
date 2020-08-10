@@ -74,7 +74,8 @@ public class PlayerAdvancedAchievementListenerTest {
 
 		CommentedYamlConfiguration mainConfig = mockUtility.getLoadedConfig("config-reward-reception.yml");
 		underTest = new PlayerAdvancedAchievementListener(mainConfig, mockUtility.getLoadedConfig("lang.yml"), 11,
-				mock(Logger.class), new StringBuilder(PLUGIN_HEADER), new CacheManager(mainConfig, abstractDatabaseManager),
+				mock(Logger.class), new StringBuilder(PLUGIN_HEADER),
+				new CacheManager(plugin, mainConfig, abstractDatabaseManager),
 				plugin, rewardParser, namesToDisplayNames, abstractDatabaseManager, null, null, null);
 		underTest.extractConfigurationParameters();
 		when(player.getUniqueId()).thenReturn(PLAYER_UUID);
@@ -89,7 +90,7 @@ public class PlayerAdvancedAchievementListenerTest {
 
 		PlayerAdvancedAchievementEvent event = new PlayerAdvancedAchievementEventBuilder().player(player)
 				.name("connect_1").displayName("Good Choice").message("Connected for the first time!")
-				.commandRewards(new String[0]).commandMessage(Collections.emptyList()).itemReward(null)
+				.commandRewards(new String[0]).commandMessage(Collections.emptyList()).itemRewards(null)
 				.moneyReward(0).experienceReward(0).maxHealthReward(0).maxOxygenReward(0).build();
 
 		underTest.onPlayerAdvancedAchievementReception(event);
@@ -106,7 +107,7 @@ public class PlayerAdvancedAchievementListenerTest {
 
 		PlayerAdvancedAchievementEvent event = new PlayerAdvancedAchievementEventBuilder().player(player)
 				.name("connect_1").displayName("Good Choice").message("Connected for the first time!")
-				.commandRewards(new String[0]).commandMessage(Collections.emptyList()).itemReward(null)
+				.commandRewards(new String[0]).commandMessage(Collections.emptyList()).itemRewards(null)
 				.moneyReward(0).experienceReward(0).maxHealthReward(0).maxOxygenReward(0).build();
 
 		underTest.onPlayerAdvancedAchievementReception(event);

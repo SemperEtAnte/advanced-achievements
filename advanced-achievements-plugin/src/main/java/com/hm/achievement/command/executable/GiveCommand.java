@@ -34,6 +34,7 @@ public class GiveCommand extends AbstractParsableCommand {
 	private String langAchievementAlreadyReceived;
 	private String langAchievementGiven;
 	private String langAchievementNotFound;
+	private String langAchievementNoPermission;
 
 	@Inject
 	public GiveCommand(@Named("main") CommentedYamlConfiguration mainConfig,
@@ -53,6 +54,7 @@ public class GiveCommand extends AbstractParsableCommand {
 		langAchievementAlreadyReceived = pluginHeader + LangHelper.get(CmdLang.ACHIEVEMENT_ALREADY_RECEIVED, langConfig);
 		langAchievementGiven = pluginHeader + LangHelper.get(CmdLang.ACHIEVEMENT_GIVEN, langConfig);
 		langAchievementNotFound = pluginHeader + LangHelper.get(CmdLang.ACHIEVEMENT_NOT_FOUND, langConfig);
+		langAchievementNoPermission = pluginHeader + LangHelper.get(CmdLang.ACHIEVEMENT_NO_PERMISSION, langConfig);
 	}
 
 	@Override
@@ -65,6 +67,9 @@ public class GiveCommand extends AbstractParsableCommand {
 			if (!configMultiCommand && cacheManager.hasPlayerAchievement(player.getUniqueId(), achievementName)) {
 				sender.sendMessage(StringUtils.replaceOnce(langAchievementAlreadyReceived, "PLAYER", args[2]));
 				return;
+			} else if (!player.hasPermission("achievement." + achievementName)) {
+				sender.sendMessage(StringUtils.replaceOnce(langAchievementNoPermission, "PLAYER", args[2]));
+				return;
 			}
 
 			String rewardPath = achievementPath + ".Reward";
@@ -74,7 +79,7 @@ public class GiveCommand extends AbstractParsableCommand {
 					.message(mainConfig.getString(achievementPath + ".Message"))
 					.commandRewards(rewardParser.getCommandRewards(rewardPath, player))
 					.commandMessage(rewardParser.getCustomCommandMessages(rewardPath))
-					.itemReward(rewardParser.getItemReward(rewardPath, player))
+					.itemRewards(rewardParser.getItemRewards(rewardPath, player))
 					.moneyReward(rewardParser.getRewardAmount(rewardPath, "Money"))
 					.experienceReward(rewardParser.getRewardAmount(rewardPath, "Experience"))
 					.maxHealthReward(rewardParser.getRewardAmount(rewardPath, "IncreaseMaxHealth"))

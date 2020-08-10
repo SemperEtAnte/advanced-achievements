@@ -1,6 +1,7 @@
 package com.hm.achievement.command.executable;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,6 +29,8 @@ import com.hm.mcshared.file.CommentedYamlConfiguration;
 @Singleton
 @CommandSpec(name = "add", permission = "add", minArgs = 4, maxArgs = 4)
 public class AddCommand extends AbstractParsableCommand {
+
+	private static final long MILLIS_PER_HOUR = TimeUnit.HOURS.toMillis(1);
 
 	private final CacheManager cacheManager;
 	private final StatisticIncreaseHandler statisticIncreaseHandler;
@@ -58,7 +61,7 @@ public class AddCommand extends AbstractParsableCommand {
 
 	@Override
 	void onExecuteForPlayer(CommandSender sender, String[] args, Player player) {
-		if (!NumberUtils.isDigits(args[1])) {
+		if (!NumberUtils.isCreatable(args[1])) {
 			sender.sendMessage(StringUtils.replaceOnce(langErrorValue, "VALUE", args[1]));
 			return;
 		}
@@ -74,7 +77,15 @@ public class AddCommand extends AbstractParsableCommand {
 						new String[] { "ACH", "AMOUNT", "PLAYER" }, new String[] { args[2], args[1], args[3] }));
 			} else if (!NormalAchievements.CONNECTIONS.toString().equals(args[2])) {
 				NormalAchievements category = NormalAchievements.getByName(args[2]);
-				long amount = cacheManager.getAndIncrementStatisticAmount(category, player.getUniqueId(), valueToAdd);
+				long amount;
+				if (category == NormalAchievements.PLAYEDTIME) {
+					// Thresholds in the configuration are in hours, underlying statistics are millis.
+					valueToAdd = (int) (valueToAdd * MILLIS_PER_HOUR);
+					amount = cacheManager.getAndIncrementStatisticAmount(category, player.getUniqueId(), valueToAdd)
+							/ MILLIS_PER_HOUR;
+				} else {
+					amount = cacheManager.getAndIncrementStatisticAmount(category, player.getUniqueId(), valueToAdd);
+				}
 				statisticIncreaseHandler.checkThresholdsAndAchievements(player, category.toString(), amount);
 				sender.sendMessage(StringUtils.replaceEach(langStatisticIncreased,
 						new String[] { "ACH", "AMOUNT", "PLAYER" }, new String[] { args[2], args[1], args[3] }));

@@ -3,10 +3,10 @@
 # |      Advanced Achievements ${project.version} GUI configuration      | #
 # +----------------------------------------------------------+ #
 #==============================================================#
-# Possible items: github.com/PyvesB/AdvancedAchievements/wiki/Material-names
-# Do not use bedrock or barrier.
+# Possible items: github.com/PyvesB/advanced-achievements/wiki/Material-names
 # Do not use the same Item and Metadata pair twice.
 # If you are using a Minecraft version prior to 1.9, change grass_path of HoePlowings!
+# The order of the categories in the GUI will match the same order as in this file.
 
 # Items used to represent the achievements.
 AchievementNotStarted:
@@ -18,6 +18,14 @@ AchievementStarted:
 AchievementReceived:
   Item: stained_clay
   Metadata: 5
+
+# Locks for HideProgressiveAchievements and HideNotReceivedCategories.
+AchievementLock:
+  Item: stained_clay
+  Metadata: 15
+CategoryLock:
+  Item: bedrock
+  Metadata: 0
 
 # Buttons when navigating in a category.
 BackButton:
@@ -166,14 +174,14 @@ Smelting:
 PlayerCommands:
   Item: paper
   Metadata: 0
-Commands:
-  Item: bookshelf
+TargetsShot:
+  Item: firework_charge
   Metadata: 0
 Custom:
   Item: feather
   Metadata: 0
-TargetsShot:
-  Item: firework_charge
+Commands:
+  Item: bookshelf
   Metadata: 0
 
 #============================================================#

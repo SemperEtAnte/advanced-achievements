@@ -3,9 +3,9 @@
 # |      Advanced Achievements ${project.version} GUI configuration      | #
 # +----------------------------------------------------------+ #
 #==============================================================#
-# Possible items: github.com/PyvesB/AdvancedAchievements/wiki/Material-names
-# Do not use bedrock or barrier.
+# Possible items: github.com/PyvesB/advanced-achievements/wiki/Material-names
 # Do not use the same Item twice.
+# The order of the categories in the GUI will match the same order as in this file.
 
 # Items used to represent the achievements.
 AchievementNotStarted:
@@ -14,6 +14,12 @@ AchievementStarted:
   Item: yellow_terracotta
 AchievementReceived:
   Item: lime_terracotta
+
+# Locks for HideProgressiveAchievements and HideNotReceivedCategories.
+AchievementLock:
+  Item: black_terracotta
+CategoryLock:
+  Item: barrier
 
 # Buttons when navigating in a category.
 BackButton:
@@ -36,8 +42,6 @@ Breeding:
   Item: wheat
 PlayerCommands:
   Item: paper
-Custom:
-  Item: feather
 Connections:
   Item: writable_book
 Deaths:
@@ -116,14 +120,18 @@ DistanceGliding:
   Item: elytra
 DistanceLlama:
   Item: cyan_carpet
-Commands:
-  Item: bookshelf
 TargetsShot:
   Item: firework_star
 RaidsWon:
   Item: gray_banner
 Riptides:
   Item: trident
+AdvancementsCompleted:
+  Item: gold_ingot
+Custom:
+  Item: feather
+Commands:
+  Item: bookshelf
 
 #============================================================#
 # +--------------------------------------------------------+ #

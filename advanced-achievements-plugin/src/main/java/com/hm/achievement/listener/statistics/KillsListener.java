@@ -53,12 +53,13 @@ public class KillsListener extends AbstractListener {
 			foundAchievements.addAll(findAchievementsByCategoryAndName(mobType));
 		}
 
-		if (entity.getCustomName() != null && player.hasPermission(category.toPermName() + '.' + entity.getCustomName())) {
+		if (serverVersion >= 8 && entity.getCustomName() != null
+				&& player.hasPermission(category.toPermName() + '.' + entity.getCustomName())) {
 			foundAchievements.addAll(findAchievementsByCategoryAndName(entity.getCustomName()));
 		}
 
 		if (entity instanceof Player) {
-			String specificPlayer = "specificplayer-" + entity.getUniqueId().toString().toLowerCase();
+			String specificPlayer = "specificplayer-" + entity.getUniqueId();
 			if (player.hasPermission(category.toPermName() + '.' + specificPlayer)) {
 				foundAchievements.addAll(findAchievementsByCategoryAndName(specificPlayer));
 			}

@@ -12,6 +12,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -35,7 +36,7 @@ import net.milkbowl.vault.economy.Economy;
 @Singleton
 public class RewardParser implements Reloadable {
 
-	private static final Pattern MULTIPLE_REWARD_COMMANDS_SPLITTER = Pattern.compile(";\\s*");
+	private static final Pattern MULTIPLE_REWARDS_SPLITTER = Pattern.compile(";\\s*");
 
 	private final CommentedYamlConfiguration mainConfig;
 	private final CommentedYamlConfiguration langConfig;
@@ -96,13 +97,13 @@ public class RewardParser implements Reloadable {
 		}
 
 		if (keyNames.contains(path + ".Item")) {
-			int amount = getItemAmount(path);
-			String name = getItemName(path, player);
-			if (name.isEmpty()) {
-				name = getItemName(getItemReward(path, player));
+			ItemStack[] items = getItemRewards(path, player);
+			for (ItemStack item : items) {
+				ItemMeta itemMeta = item.getItemMeta();
+				String name = itemMeta.hasDisplayName() ? itemMeta.getDisplayName() : getItemName(item);
+				rewardTypes.add(StringUtils.replaceEach(langListRewardItem, new String[] { "AMOUNT", "ITEM" },
+						new String[] { Integer.toString(item.getAmount()), name }));
 			}
-			rewardTypes.add(StringUtils.replaceEach(langListRewardItem, new String[] { "AMOUNT", "ITEM" },
-					new String[] { Integer.toString(amount), name }));
 		}
 
 		if (keyNames.contains(path + ".Experience")) {
@@ -160,52 +161,43 @@ public class RewardParser implements Reloadable {
 	 * @return the reward amount
 	 */
 	public int getRewardAmount(String path, String type) {
-		// Supports both old and new plugin syntax (Amount used to be a separate sub-category).
-		return Math.max(mainConfig.getInt(path + "." + type, 0), mainConfig.getInt(path + "." + type + ".Amount", 0));
+		return mainConfig.getInt(path + "." + type);
 	}
 
 	/**
-	 * Returns an item reward for a given achievement (specified in configuration file).
+	 * Returns an item reward for a given achievement (specified in configuration file). Reward is of the form: "Item:
+	 * coal 5 Christmas Coal"
 	 *
 	 * @param path achievement configuration path
 	 * @param player
 	 * @return ItemStack object corresponding to the reward
 	 */
-	public ItemStack getItemReward(String path, Player player) {
-		int amount = getItemAmount(path);
-		if (amount <= 0) {
+	public ItemStack[] getItemRewards(String path, Player player) {
+		String itemString = StringUtils.normalizeSpace(mainConfig.getString(path + ".Item", ""));
+		if (!itemString.contains(" ")) {
 			return null;
 		}
 
-		String typePath = path + ".Item.Type";
-		if (mainConfig.getKeys(true).contains(typePath)) {
-			// Old config syntax (type of item separated in a additional subcategory).
-			Optional<Material> rewardMaterial = materialHelper.matchMaterial(mainConfig.getString(typePath),
-					"config.yml (" + typePath + ")");
+		String[] itemStrings = MULTIPLE_REWARDS_SPLITTER.split(itemString);
+		ItemStack[] itemData = new ItemStack[itemStrings.length];
+		for (int i = 0; i < itemStrings.length; i++) {
+			String[] parts = StringUtils.split(itemStrings[i]);
+			Optional<Material> rewardMaterial = materialHelper.matchMaterial(parts[0],
+					"config.yml (" + (path + ".Item") + ")");
 			if (rewardMaterial.isPresent()) {
-				return new ItemStack(rewardMaterial.get(), amount);
-			}
-		} else {
-			// New config syntax. Reward is of the form: "Item: coal 5 Christmas Coal"
-			// The amount has already been parsed out and is provided by parameter amount.
-			String itemPath = path + ".Item";
-			String materialNameAndQty = mainConfig.getString(itemPath, "");
-			String materialName = StringUtils.substringBefore(materialNameAndQty, " ");
-
-			Optional<Material> rewardMaterial = materialHelper.matchMaterial(materialName, "config.yml (" + typePath + ")");
-			if (rewardMaterial.isPresent()) {
-				ItemStack item = new ItemStack(rewardMaterial.get(), amount);
-
-				String name = getItemName(path, player);
+				ItemStack item = new ItemStack(rewardMaterial.get(), NumberUtils.toInt(parts[1], 1));
+				ItemMeta meta = item.getItemMeta();
+				String name = replacePlayerPlaceholders(StringUtils.join(parts, " ", 2, parts.length), player);
 				if (!name.isEmpty()) {
-					ItemMeta meta = item.getItemMeta();
 					meta.setDisplayName(name);
-					item.setItemMeta(meta);
 				}
-				return item;
+				item.setItemMeta(meta);
+				itemData[i] = item;
+			} else {
+				return null;
 			}
 		}
-		return null;
+		return itemData;
 	}
 
 	/**
@@ -226,7 +218,7 @@ public class RewardParser implements Reloadable {
 			return new String[0];
 		}
 		// Multiple reward commands can be set, separated by a semicolon and space. Extra parsing needed.
-		return MULTIPLE_REWARD_COMMANDS_SPLITTER.split(replacePlayerPlaceholders(commandReward, player));
+		return MULTIPLE_REWARDS_SPLITTER.split(replacePlayerPlaceholders(commandReward, player));
 	}
 
 	/**
@@ -246,39 +238,6 @@ public class RewardParser implements Reloadable {
 		}
 
 		return Collections.singletonList(mainConfig.getString(path + ".Command.Display"));
-	}
-
-	/**
-	 * Extracts the item reward amount from the configuration.
-	 *
-	 * @param path achievement configuration path
-	 * @return the amount for an item reward
-	 */
-	private int getItemAmount(String path) {
-		int itemAmount = 0;
-		if (mainConfig.getKeys(true).contains(path + ".Item.Amount")) {
-			// Old config syntax.
-			itemAmount = mainConfig.getInt(path + ".Item.Amount", 0);
-		} else if (mainConfig.getKeys(true).contains(path + ".Item")) {
-			// New config syntax. Name of item and quantity are on the same line, separated by a space.
-			String materialAndQty = StringUtils.normalizeSpace(mainConfig.getString(path + ".Item", ""));
-			String intString = StringUtils.substringBefore(StringUtils.substringAfter(materialAndQty, " "), " ");
-			itemAmount = Integer.parseInt(intString);
-		}
-		return itemAmount;
-	}
-
-	/**
-	 * Extracts the item reward custom name from the configuration. Not supported for old config syntax.
-	 *
-	 * @param path achievement configuration path
-	 * @param player
-	 * @return the custom name for an item reward
-	 */
-	private String getItemName(String path, Player player) {
-		String configString = mainConfig.getString(path + ".Item", "");
-		String[] splittedString = StringUtils.split(configString);
-		return replacePlayerPlaceholders(StringUtils.join(splittedString, " ", 2, splittedString.length).trim(), player);
 	}
 
 	/**

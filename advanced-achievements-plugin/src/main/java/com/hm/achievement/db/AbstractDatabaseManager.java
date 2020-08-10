@@ -72,7 +72,7 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 	public void extractConfigurationParameters() {
 		configBookChronologicalOrder = mainConfig.getBoolean("BookChronologicalOrder", true);
 		String localeString = mainConfig.getString("DateLocale", "en");
-		boolean dateDisplayTime = mainConfig.getBoolean("DateDisplayTime", false);
+		boolean dateDisplayTime = mainConfig.getBoolean("DateDisplayTime");
 		Locale locale = new Locale(localeString);
 		if (dateDisplayTime) {
 			dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale);
@@ -108,8 +108,6 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 
 		databaseUpdater.renameExistingTables(this);
 		databaseUpdater.initialiseTables(this);
-		databaseUpdater.updateOldDBToMaterial(this);
-		databaseUpdater.updateOldDBToDates(this);
 		databaseUpdater.updateOldDBToTimestamps(this);
 		Arrays.stream(MultipleAchievements.values()).forEach(m -> databaseUpdater.updateOldDBColumnSize(this, m));
 	}
@@ -193,9 +191,7 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 				ps.setFetchSize(1000);
 				ResultSet rs = ps.executeQuery();
 				while (rs.next()) {
-					// Check for names with single quotes but also two single quotes, due to a bug in versions 3.0 to
-					// 3.0.2 where names containing single quotes were inserted with two single quotes in the database.
-					achievementNamesList.add(StringUtils.replace(rs.getString(1), "''", "'"));
+					achievementNamesList.add(rs.getString(1));
 				}
 			}
 			return achievementNamesList;
@@ -210,19 +206,12 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 	 * @return date represented as a string
 	 */
 	public String getPlayerAchievementDate(UUID uuid, String achName) {
-		// Check for names with single quotes but also two single quotes, due to a bug in versions 3.0 to 3.0.2
-		// where names containing single quotes were inserted with two single quotes in the database.
-		String sql = achName.contains("'")
-				? "SELECT date FROM " + prefix + "achievements WHERE playername = ? AND (achievement = ? OR achievement = ?)"
-				: "SELECT date FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
+		String sql = "SELECT date FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
 		return ((SQLReadOperation<String>) () -> {
 			Connection conn = getSQLConnection();
 			try (PreparedStatement ps = conn.prepareStatement(sql)) {
 				ps.setObject(1, uuid, Types.CHAR);
 				ps.setString(2, achName);
-				if (achName.contains("'")) {
-					ps.setString(3, StringUtils.replace(achName, "'", "''"));
-				}
 				ResultSet rs = ps.executeQuery();
 				if (rs.next()) {
 					return dateFormat.format(new Date(rs.getTimestamp(1).getTime()));
@@ -347,20 +336,12 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 	 * @return true if achievement found in database, false otherwise
 	 */
 	public boolean hasPlayerAchievement(UUID uuid, String achName) {
-		// Check for names with single quotes but also two single quotes, due to a bug in versions 3.0 to 3.0.2
-		// where names containing single quotes were inserted with two single quotes in the database.
-		String sql = achName.contains("'")
-				? "SELECT achievement FROM " + prefix
-						+ "achievements WHERE playername = ? AND (achievement = ? OR achievement = ?)"
-				: "SELECT achievement FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
+		String sql = "SELECT achievement FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
 		return ((SQLReadOperation<Boolean>) () -> {
 			Connection conn = getSQLConnection();
 			try (PreparedStatement ps = conn.prepareStatement(sql)) {
 				ps.setObject(1, uuid, Types.CHAR);
 				ps.setString(2, achName);
-				if (achName.contains("'")) {
-					ps.setString(3, StringUtils.replace(achName, "'", "''"));
-				}
 				return ps.executeQuery().next();
 			}
 		}).executeOperation("checking for an achievement");
@@ -498,22 +479,31 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 	 * @param achName
 	 */
 	public void deletePlayerAchievement(UUID uuid, String achName) {
-		// Check for names with single quotes but also two single quotes, due to a bug in versions 3.0 to 3.0.2
-		// where names containing single quotes were inserted with two single quotes in the database.
-		String sql = achName.contains("'")
-				? "DELETE FROM " + prefix + "achievements WHERE playername = ? AND (achievement = ? OR achievement = ?)"
-				: "DELETE FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
+		String sql = "DELETE FROM " + prefix + "achievements WHERE playername = ? AND achievement = ?";
 		((SQLWriteOperation) () -> {
 			Connection conn = getSQLConnection();
 			try (PreparedStatement ps = conn.prepareStatement(sql)) {
 				ps.setObject(1, uuid, Types.CHAR);
 				ps.setString(2, achName);
-				if (achName.contains("'")) {
-					ps.setString(3, StringUtils.replace(achName, "'", "''"));
-				}
 				ps.execute();
 			}
 		}).executeOperation(pool, logger, "deleting an achievement");
+	}
+
+	/**
+	 * Deletes all achievements from a player.
+	 *
+	 * @param uuid
+	 */
+	public void deleteAllPlayerAchievements(UUID uuid) {
+		String sql = "DELETE FROM " + prefix + "achievements WHERE playername = ?";
+		((SQLWriteOperation) () -> {
+			Connection conn = getSQLConnection();
+			try (PreparedStatement ps = conn.prepareStatement(sql)) {
+				ps.setObject(1, uuid, Types.CHAR);
+				ps.execute();
+			}
+		}).executeOperation(pool, logger, "deleting all achievements");
 	}
 
 	/**
@@ -553,9 +543,7 @@ public abstract class AbstractDatabaseManager implements Reloadable {
 				ps.setObject(1, uuid, Types.CHAR);
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
-						// Remove eventual double quotes due to a bug in versions 3.0 to 3.0.2 where names containing
-						// single quotes were inserted with two single quotes in the database.
-						String achName = StringUtils.replace(rs.getString(2), "''", "'");
+						String achName = rs.getString(2);
 						String displayName = namesToDisplayNames.get(achName);
 						if (StringUtils.isNotBlank(displayName)) {
 							achName = displayName;

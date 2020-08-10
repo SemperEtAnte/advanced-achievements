@@ -1,9 +1,11 @@
 package com.hm.achievement.gui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,10 +36,7 @@ import com.hm.mcshared.file.CommentedYamlConfiguration;
 @Singleton
 public class GUIItems implements Reloadable {
 
-	// Category items stacks.
-	private final Map<MultipleAchievements, ItemStack> multipleAchievementItems = new EnumMap<>(MultipleAchievements.class);
-	private final Map<NormalAchievements, ItemStack> normalAchievementItems = new EnumMap<>(NormalAchievements.class);
-	private ItemStack commandsAchievementsItem;
+	private final Map<OrderedCategory, ItemStack> orderedAchievementItems = new TreeMap<>();
 
 	// Various other item stacks displayed in the GUI.
 	private ItemStack previousButton;
@@ -45,6 +44,9 @@ public class GUIItems implements Reloadable {
 	private ItemStack backButton;
 	private ItemStack achievementNotStarted;
 	private ItemStack achievementStarted;
+	private ItemStack achievementLock;
+	private ItemStack categoryLock;
+
 	private ItemStack achievementReceived;
 
 	private final CommentedYamlConfiguration mainConfig;
@@ -77,6 +79,9 @@ public class GUIItems implements Reloadable {
 		langListAchievementsInCategoryPlural = LangHelper.get(GuiLang.ACHIEVEMENTS_IN_CATEGORY_PLURAL, langConfig);
 		langListAchievementInCategorySingular = LangHelper.get(GuiLang.ACHIEVEMENTS_IN_CATEGORY_SINGULAR, langConfig);
 
+		orderedAchievementItems.clear();
+		// getShallowKeys returns a LinkedHashSet, preserving the ordering specified in the file.
+		List<String> orderedCategories = new ArrayList<>(guiConfig.getShallowKeys(""));
 		// Prepare item stacks displayed in the GUI for Multiple achievements.
 		for (MultipleAchievements category : MultipleAchievements.values()) {
 			String categoryName = category.toString();
@@ -87,7 +92,7 @@ public class GUIItems implements Reloadable {
 			}
 			ItemStack itemStack = createItemStack(categoryName);
 			buildItemLore(itemStack, LangHelper.get(category, langConfig), totalAchievements);
-			multipleAchievementItems.put(category, itemStack);
+			orderedAchievementItems.put(new OrderedCategory(orderedCategories.indexOf(categoryName), category), itemStack);
 		}
 
 		// Prepare item stacks displayed in the GUI for Normal achievements.
@@ -95,13 +100,15 @@ public class GUIItems implements Reloadable {
 			String categoryName = category.toString();
 			ItemStack itemStack = createItemStack(categoryName);
 			buildItemLore(itemStack, LangHelper.get(category, langConfig), mainConfig.getShallowKeys(categoryName).size());
-			normalAchievementItems.put(category, itemStack);
+			orderedAchievementItems.put(new OrderedCategory(orderedCategories.indexOf(categoryName), category), itemStack);
 		}
 
 		// Prepare item stack displayed in the GUI for Commands achievements.
-		commandsAchievementsItem = createItemStack(CommandAchievements.COMMANDS.toString());
-		buildItemLore(commandsAchievementsItem, LangHelper.get(GuiLang.COMMANDS, langConfig),
+		ItemStack itemStack = createItemStack(CommandAchievements.COMMANDS.toString());
+		buildItemLore(itemStack, LangHelper.get(CommandAchievements.COMMANDS, langConfig),
 				mainConfig.getShallowKeys(CommandAchievements.COMMANDS.toString()).size());
+		orderedAchievementItems.put(new OrderedCategory(orderedCategories.indexOf(CommandAchievements.COMMANDS.toString()),
+				CommandAchievements.COMMANDS), itemStack);
 
 		achievementNotStarted = createItemStack("AchievementNotStarted");
 		achievementStarted = createItemStack("AchievementStarted");
@@ -109,6 +116,8 @@ public class GUIItems implements Reloadable {
 		previousButton = createButton("PreviousButton", GuiLang.PREVIOUS_MESSAGE, GuiLang.PREVIOUS_LORE);
 		nextButton = createButton("NextButton", GuiLang.NEXT_MESSAGE, GuiLang.NEXT_LORE);
 		backButton = createButton("BackButton", GuiLang.BACK_MESSAGE, GuiLang.BACK_LORE);
+		achievementLock = createButton("AchievementLock", GuiLang.ACHIEVEMENT_NOT_UNLOCKED, null);
+		categoryLock = createButton("CategoryLock", GuiLang.CATEGORY_NOT_UNLOCKED, null);
 	}
 
 	/**
@@ -122,7 +131,7 @@ public class GUIItems implements Reloadable {
 		String path = categoryName + ".Item";
 		Material material = materialHelper.matchMaterial(guiConfig.getString(path), Material.BEDROCK,
 				"gui.yml (" + path + ")");
-		short metadata = (short) guiConfig.getInt(categoryName + ".Metadata", 0);
+		short metadata = (short) guiConfig.getInt(categoryName + ".Metadata");
 		return new ItemStack(material, 1, metadata);
 	}
 
@@ -140,10 +149,12 @@ public class GUIItems implements Reloadable {
 		String displayName = ChatColor.translateAlternateColorCodes('&',
 				StringEscapeUtils.unescapeJava(LangHelper.get(msg, langConfig)));
 		meta.setDisplayName(displayName);
-		String loreString = ChatColor.translateAlternateColorCodes('&',
-				StringEscapeUtils.unescapeJava(LangHelper.get(lore, langConfig)));
-		if (!loreString.isEmpty()) {
-			meta.setLore(Collections.singletonList(loreString));
+		if (lore != null) {
+			String loreString = ChatColor.translateAlternateColorCodes('&',
+					StringEscapeUtils.unescapeJava(LangHelper.get(lore, langConfig)));
+			if (!loreString.isEmpty()) {
+				meta.setLore(Collections.singletonList(loreString));
+			}
 		}
 		button.setItemMeta(meta);
 		return button;
@@ -180,16 +191,8 @@ public class GUIItems implements Reloadable {
 		item.setItemMeta(itemMeta);
 	}
 
-	public Map<MultipleAchievements, ItemStack> getMultipleAchievementItems() {
-		return multipleAchievementItems;
-	}
-
-	public Map<NormalAchievements, ItemStack> getNormalAchievementItems() {
-		return normalAchievementItems;
-	}
-
-	public ItemStack getCommandsAchievementsItem() {
-		return commandsAchievementsItem;
+	public Map<OrderedCategory, ItemStack> getOrderedAchievementItems() {
+		return orderedAchievementItems;
 	}
 
 	public ItemStack getPreviousButton() {
@@ -214,6 +217,14 @@ public class GUIItems implements Reloadable {
 
 	public ItemStack getAchievementReceived() {
 		return achievementReceived;
+	}
+
+	public ItemStack getAchievementLock() {
+		return achievementLock;
+	}
+
+	public ItemStack getCategoryLock() {
+		return categoryLock;
 	}
 
 }

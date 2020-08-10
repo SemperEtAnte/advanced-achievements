@@ -38,9 +38,11 @@ book-not-received: "You have not yet received any achievements."
 
 # Related to /aach give.
 player-offline: "The player PLAYER is offline!"
+not-a-player: "You cannot give achievements to ENTITY, it is not a player!"
 achievement-already-received: "The player PLAYER has already received this achievement!"
 achievement-not-found: "The specified achievement was not found in Commands category. Did you mean CLOSEST_MATCH?"
 achievement-given: "Achievement given!"
+achievement-no-permission: "The player PLAYER does not have permission to receive this achievement!"
 
 # Related to /aach add.
 error-value: "The value VALUE must to be an integer!"
@@ -56,9 +58,10 @@ check-achievements-false: "PLAYER has not received the achievement ACH!"
 
 # Related to /aach delete.
 delete-achievements: "The achievement ACH was deleted from PLAYER."
+delete-all-achievements: "All achievements were deleted from PLAYER."
 
 # Related to achievement rewards.
-item-reward-received: "You received an item reward:"
+item-reward-received: "You received an item reward: AMOUNT ITEM"
 money-reward-received: "You received: AMOUNT!"
 command-reward: "Reward command carried out!"
 custom-command-reward: "You received your reward: MESSAGE"
@@ -121,7 +124,8 @@ list-description: "Description:"
 list-goal: "Goal:"
 list-reception: "Reception date:"
 list-progress: "Progress:"
-list-reward: "Reward(s):"
+list-reward: "Reward:"
+list-rewards: "Rewards:"
 list-reward-money: "receive AMOUNT"
 list-reward-item: "receive AMOUNT ITEM"
 list-reward-command: "other"
@@ -131,6 +135,7 @@ list-reward-increase-max-oxygen: "increase max oxygen by AMOUNT"
 list-achievement-received: "&5\u2714&f "
 list-achievement-not-received: "&4\u2718 "
 list-category-not-unlocked: "You have not yet unlocked this category."
+list-achievement-not-unlocked: "You have not yet unlocked this achievement."
 list-back-message: "&7Back"
 list-back-lore: ""
 list-previous-message: "&7Previous"
@@ -139,6 +144,7 @@ list-next-message: "&7Next"
 list-next-lore: ""
 list-achievements-in-category-singular: "AMOUNT achievement"
 list-achievements-in-category-plural: "AMOUNT achievements"
+list-unavailable-whilst-sleeping: "&c&lYou cannot open the Achievements List whilst sleeping."
 
 # Related to category names in /aach list.
 # Set a parameter to "" to hide it from /aach list (but not disable the category).
@@ -192,13 +198,15 @@ list-custom: "Custom Categories"
 list-targetsshot: "Targets Shot"
 list-raids-won: "Raids Won"
 list-riptides: "Riptides Used"
+list-advancements-completed: "Advancements Completed"
 
 # Related to /aach toggle.
 toggle-displayed: "You will now be notified when other players get achievements."
 toggle-hidden: "You will no longer be notified when other players get achievements."
 
 # Related to /aach reset.
-reset-successful: " statistics were cleared for PLAYER."
+reset-successful: "CAT statistics were cleared for PLAYER."
+reset-all-successful: "All statistics were cleared for PLAYER."
 
 # Related to /aach generate.
 advancements-generated: "Advancements were successfully generated."

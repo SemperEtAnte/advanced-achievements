@@ -47,7 +47,7 @@ public class FileUpdater {
 
 	/**
 	 * Updates configuration file from older plugin versions by adding missing parameters. Upgrades from versions prior
-	 * to 2.5.2 are not supported.
+	 * to 5.0 are not supported.
 	 *
 	 * @param config
 	 */
@@ -71,63 +71,6 @@ public class FileUpdater {
 			addNewCategory(config, category.toString(), category.toConfigComment());
 		}
 		addNewCategory(config, CommandAchievements.COMMANDS.toString(), CommandAchievements.COMMANDS.toConfigComment());
-
-		// Added in version 3.0:
-		updateSetting(config, "TablePrefix", "",
-				"Prefix added to the tables in the database. If you switch from the default tables names (no prefix),",
-				"the plugin will attempt an automatic renaming. Otherwise you have to rename your tables manually.",
-				"Do a full server reload or restart to make this effective.");
-		updateSetting(config, "BookChronologicalOrder", true,
-				"Sort pages of the book in chronological order (false for reverse chronological order).");
-		updateSetting(config, "DisableSilkTouchBreaks", false,
-				"Do not take into accound items broken with Silk Touch for the Breaks achievements.");
-		updateSetting(config, "ObfuscateProgressiveAchievements", false,
-				"For categories with a series of related achievements where the only thing changing is the number of times",
-				"the event has occurred, show achievements that have been obtained and show the next obtainable achievement,",
-				"but obfuscate the additional achievements.",
-				"in order of increasing difficulty. For example, under Places, stone, the first achievement could have a",
-				"target of 100 stone,# the second 500 stone, and the third 1000 stone.  When ObfuscateProgressiveAchievements",
-				"is true, initially only the 100 stone achievement will be readable in the GUI.  Once 100 stone have been placed,",
-				"the 500 stone achievement will become legible.");
-
-		// Added in version 3.0.2:
-		updateSetting(config, "DisableSilkTouchOreBreaks", false,
-				"Do not take into account ores broken with Silk Touch for the Breaks achievements.",
-				"DisableSilkTouchBreaks takes precedence over this.");
-		updateSetting(config, "LanguageFileName", "lang.yml",
-				" Name of the language file you want to use in your AdvancedAchievements directory.");
-
-		// Added in version 4.0:
-		updateSetting(config, "EnrichedListProgressBars", true,
-				"Display precise statistic information in the /aach list progress bars.");
-		Map<String, Integer> cooldownCategories = new HashMap<>();
-		cooldownCategories.put("LavaBuckets", 10);
-		cooldownCategories.put("WaterBuckets", 10);
-		cooldownCategories.put("Milk", 10);
-		cooldownCategories.put("Beds", 30);
-		cooldownCategories.put("Brewing", 5);
-		cooldownCategories.put("MusicDiscs", 30);
-		updateSetting(config, "StatisticCooldown", cooldownCategories,
-				"Time in seconds between each statistic count. Only the listed categories are currently supported.");
-		updateSetting(config, "CooldownActionBar", true,
-				"Display action bar message when player does an action while in the cooldown period.");
-
-		// Added in version 4.1:
-		updateSetting(config, "NumberedItemsInList", true,
-				"Annotate each achievement displayed in a /aach list category with a number. Due to a Minecraft limitation,",
-				"if you have more than 64 achievements for a category, the counting will start back at 1 after number 64.");
-		updateSetting(config, "DateLocale", "en",
-				"Locale used to format dates in /aach book and /aach list. You must select an ISO 639 language code.",
-				"The list of possible language codes can be found here at www.loc.gov/standards/iso639-2/php/code_list.php");
-		updateSetting(config, "DateDisplayTime", false,
-				"Display reception time of achievements in /aach book and /aach list in addition to the date. For achievements",
-				"received in plugin versions prior to 3.0, the precise time information is not available and will be displayed as midnight.");
-
-		// Added in version 4.2:
-		updateSetting(config, "RestrictSpectator", true,
-				"Stop all stats from increasing when player in spectator mode, including PlayedTime.",
-				"Connection achievements will only be handled once a player switches to a non-spectator mode.",
-				"No effect if using Minecraft 1.7.9 or 1.7.10.");
 
 		// Added in version 5.0:
 		updateSetting(config, "SimplifiedReception", false,
@@ -174,15 +117,25 @@ public class FileUpdater {
 				"the chat. If HoverableReceiverChatText is true, a single hoverable text will be displayed to the receiver.",
 				"Otherwise texts will be displayed one after the other.");
 
+		// Added in version 5.4:
+		Map<String, Integer> cooldownCategories = new HashMap<>();
+		cooldownCategories.put("LavaBuckets", 10);
+		cooldownCategories.put("WaterBuckets", 10);
+		cooldownCategories.put("Milk", 10);
+		cooldownCategories.put("Beds", 30);
+		cooldownCategories.put("Brewing", 5);
+		cooldownCategories.put("MusicDiscs", 30);
+		updateSetting(config, "StatisticCooldown", cooldownCategories,
+				"Time in seconds between each statistic count. Only the listed categories are currently supported.");
+
 		// Added in version 5.5:
-		updateSetting(config, "ListColorNotReceived", 8,
-				"Color used for Goals and progress bars in /aach list when an achievement is not yet received.");
+		updateSetting(config, "ListColorNotReceived", 8, "Color used for not yet received achievements in /aach list.");
 
 		// Added in version 5.6:
 		if (!config.isConfigurationSection("AllAchievementsReceivedRewards")) {
 			updateSetting(config, "AllAchievementsReceivedRewards.Money", 30,
 					"Awarded when a player has received all the achievements. Use the same reward pattern as with achievements.",
-					"See https://github.com/PyvesB/AdvancedAchievements/wiki/Rewards");
+					"See https://github.com/PyvesB/advanced-achievements/wiki/Rewards");
 		}
 
 		// Added in 5.9.0:
@@ -194,13 +147,24 @@ public class FileUpdater {
 		// Added in 5.10.0:
 		String bookDefault = serverVersion < 9 ? "level_up" : "entity_player_levelup";
 		updateSetting(config, "SoundBook", bookDefault,
-				"For /aach book. Possible values: github.com/PyvesB/AdvancedAchievements/wiki/Sound-names");
+				"For /aach book. Possible values: github.com/PyvesB/advanced-achievements/wiki/Sound-names");
 		String statsRankingDefault = serverVersion < 9 ? "firework_blast"
 				: serverVersion < 13 ? "entity_firework_large_blast" : "entity_firework_rocket_blast";
 		updateSetting(config, "SoundStats", statsRankingDefault,
-				"For /aach stats with all achievements. Possible values: github.com/PyvesB/AdvancedAchievements/wiki/Sound-names");
+				"For /aach stats with all achievements. Possible values: github.com/PyvesB/advanced-achievements/wiki/Sound-names");
 		updateSetting(config, "SoundRanking", statsRankingDefault,
-				"For /aach top, week, month when ranked in the top list. Possible values: github.com/PyvesB/AdvancedAchievements/wiki/Sound-names");
+				"For /aach top, week, month when ranked in the top list. Possible values: github.com/PyvesB/advanced-achievements/wiki/Sound-names");
+
+		// Added in 5.14.0:
+		updateSetting(config, "ReceiverChatMessages", true, "Display chat messages when a player receives an achievement.");
+
+		// Added in 6.0.0:
+		updateSetting(config, "ListItaliciseNotReceived", true,
+				"Italicise not yet received achievements in /aach list. Obfuscated achievements are not affected.");
+
+		// Added in 6.1.0:
+		updateSetting(config, "HideProgressiveAchievements", false,
+				"Similar to ObfuscateProgressiveAchievements, but displays not received achievements as locked in /aach list.");
 
 		if (updatePerformed) {
 			// Changes in the configuration: save and do a fresh load.
@@ -214,8 +178,7 @@ public class FileUpdater {
 	}
 
 	/**
-	 * Updates language file from older plugin versions by adding missing parameters. Upgrades from versions prior to
-	 * 2.5.2 are not supported.
+	 * Updates language file from older plugin versions by adding missing parameters.
 	 *
 	 * @param lang
 	 */
@@ -239,10 +202,9 @@ public class FileUpdater {
 		// Iterate through all Lang implementation keys & default values
 		Arrays.stream(new Lang[][] { CmdLang.values(), HelpLang.values(), HelpLang.Hover.values(), InfoLang.values(),
 				GuiLang.values(), ListenerLang.values(), RewardLang.values(), NormalAchievements.values(),
-				MultipleAchievements.values() }).flatMap(Arrays::stream).forEach(language -> updateLang(lang, language));
-
-		// Not found in Enums (Possibly unused)
-		updateSetting(lang, "list-custom", "Custom Categories");
+				MultipleAchievements.values(), new Lang[] { CommandAchievements.COMMANDS } })
+				.flatMap(Arrays::stream)
+				.forEach(language -> updateLang(lang, language));
 
 		if (updatePerformed) {
 			// Changes in the language file: save and do a fresh load.
@@ -285,6 +247,13 @@ public class FileUpdater {
 		updateSetting(gui, "RaidsWon.Item", "gray_banner");
 		updateSetting(gui, "Riptides.Item", "trident");
 
+		// Added in version 5.15.0:
+		updateSetting(gui, "AdvancementsCompleted.Item", "gold_ingot");
+
+		// Added in version 6.1.0:
+		updateSetting(gui, "AchievementLock.Item", serverVersion >= 13 ? "black_terracotta" : "stained_clay");
+		updateSetting(gui, "CategoryLock.Item", serverVersion >= 13 ? "barrier" : "bedrock");
+
 		if (serverVersion < 13) {
 			updateSetting(gui, "Breeding.Metadata", 0);
 			updateSetting(gui, "AchievementNotStarted.Metadata", 14);
@@ -295,6 +264,8 @@ public class FileUpdater {
 			updateSetting(gui, "NextButton.Metadata", 0);
 			updateSetting(gui, "Custom.Metadata", 0);
 			updateSetting(gui, "TargetsShot.Metadata", 0);
+			updateSetting(gui, "AchievementLock.Metadata", 15);
+			updateSetting(gui, "CategoryLock.Metadata", 0);
 		}
 
 		if (updatePerformed) {

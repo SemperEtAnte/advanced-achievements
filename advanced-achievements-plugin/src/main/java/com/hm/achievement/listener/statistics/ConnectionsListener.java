@@ -105,16 +105,17 @@ public class ConnectionsListener extends AbstractListener implements Cleanable {
 		if (!dateString.equals(databaseManager.getPlayerConnectionDate(player.getUniqueId()))) {
 			int connections = databaseManager.updateAndGetConnection(player.getUniqueId(), dateString);
 			String achievementPath = category + "." + connections;
-			if (mainConfig.contains(achievementPath)) {
+			String achievementName = mainConfig.getString(achievementPath + ".Name");
+			if (mainConfig.contains(achievementPath) && player.hasPermission("achievement." + achievementName)) {
 				String rewardPath = achievementPath + ".Reward";
 				// Fire achievement event.
 				PlayerAdvancedAchievementEventBuilder playerAdvancedAchievementEventBuilder = new PlayerAdvancedAchievementEventBuilder()
-						.player(player).name(mainConfig.getString(achievementPath + ".Name"))
+						.player(player).name(achievementName)
 						.displayName(mainConfig.getString(achievementPath + ".DisplayName"))
 						.message(mainConfig.getString(achievementPath + ".Message"))
 						.commandRewards(rewardParser.getCommandRewards(rewardPath, player))
 						.commandMessage(rewardParser.getCustomCommandMessages(rewardPath))
-						.itemReward(rewardParser.getItemReward(rewardPath, player))
+						.itemRewards(rewardParser.getItemRewards(rewardPath, player))
 						.moneyReward(rewardParser.getRewardAmount(rewardPath, "Money"))
 						.experienceReward(rewardParser.getRewardAmount(rewardPath, "Experience"))
 						.maxHealthReward(rewardParser.getRewardAmount(rewardPath, "IncreaseMaxHealth"))

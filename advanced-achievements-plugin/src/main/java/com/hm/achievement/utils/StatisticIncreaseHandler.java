@@ -51,9 +51,9 @@ public class StatisticIncreaseHandler implements Reloadable {
 
 	@Override
 	public void extractConfigurationParameters() {
-		configRestrictCreative = mainConfig.getBoolean("RestrictCreative", false);
+		configRestrictCreative = mainConfig.getBoolean("RestrictCreative");
 		configRestrictSpectator = mainConfig.getBoolean("RestrictSpectator", true);
-		configRestrictAdventure = mainConfig.getBoolean("RestrictAdventure", false);
+		configRestrictAdventure = mainConfig.getBoolean("RestrictAdventure");
 		// Spectator mode introduced in Minecraft 1.8. Automatically relevant parameter for older versions.
 		if (configRestrictSpectator && serverVersion < 8) {
 			configRestrictSpectator = false;
@@ -76,8 +76,9 @@ public class StatisticIncreaseHandler implements Reloadable {
 			if (currentValue >= threshold) {
 				String achievementPath = categorySubcategory + "." + threshold;
 				String achievementName = mainConfig.getString(achievementPath + ".Name");
-				// Check whether player has received the achievement.
-				if (!cacheManager.hasPlayerAchievement(player.getUniqueId(), achievementName)) {
+				// Check whether player has received the achievement and has permission to do so.
+				if (!cacheManager.hasPlayerAchievement(player.getUniqueId(), achievementName)
+						&& player.hasPermission("achievement." + achievementName)) {
 					String rewardPath = achievementPath + ".Reward";
 					// Fire achievement event.
 					PlayerAdvancedAchievementEventBuilder playerAdvancedAchievementEventBuilder = new PlayerAdvancedAchievementEventBuilder()
@@ -86,7 +87,7 @@ public class StatisticIncreaseHandler implements Reloadable {
 							.message(mainConfig.getString(achievementPath + ".Message"))
 							.commandRewards(rewardParser.getCommandRewards(rewardPath, player))
 							.commandMessage(rewardParser.getCustomCommandMessages(rewardPath))
-							.itemReward(rewardParser.getItemReward(rewardPath, player))
+							.itemRewards(rewardParser.getItemRewards(rewardPath, player))
 							.moneyReward(rewardParser.getRewardAmount(rewardPath, "Money"))
 							.experienceReward(rewardParser.getRewardAmount(rewardPath, "Experience"))
 							.maxHealthReward(rewardParser.getRewardAmount(rewardPath, "IncreaseMaxHealth"))
@@ -109,14 +110,13 @@ public class StatisticIncreaseHandler implements Reloadable {
 	 * @return true if the increase should be taken into account, false otherwise
 	 */
 	protected boolean shouldIncreaseBeTakenIntoAccount(Player player, Category category) {
-		boolean isNPC = player.hasMetadata("NPC");
-		boolean permission = player.hasPermission(category.toPermName());
-		boolean restrictedCreative = configRestrictCreative && player.getGameMode() == GameMode.CREATIVE;
-		boolean restrictedSpectator = configRestrictSpectator && player.getGameMode() == GameMode.SPECTATOR;
-		boolean restrictedAdventure = configRestrictAdventure && player.getGameMode() == GameMode.ADVENTURE;
-		boolean excludedWorld = configExcludedWorlds.contains(player.getWorld().getName());
-
-		return !isNPC && permission && !restrictedCreative && !restrictedSpectator && !restrictedAdventure && !excludedWorld;
+		GameMode gameMode = player.getGameMode();
+		return !player.hasMetadata("NPC")
+				&& player.hasPermission(category.toPermName())
+				&& (!configRestrictCreative || gameMode != GameMode.CREATIVE)
+				&& (!configRestrictSpectator || gameMode != GameMode.SPECTATOR)
+				&& (!configRestrictAdventure || gameMode != GameMode.ADVENTURE)
+				&& !configExcludedWorlds.contains(player.getWorld().getName());
 	}
 
 }
